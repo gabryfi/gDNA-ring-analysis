@@ -1,0 +1,74 @@
+
+#================================================================= #
+# Basecalling a different model
+
+dorado basecaller hac pod5s/ > calls.bam
+
+#================================================================= #
+zcat 1/fastq_pass/*.fastq.gz > 892sm1.fastq
+zcat 2/fastq_pass/*.fastq.gz > 892sm2.fastq
+
+
+# once all in the ws
+cat 892sm*  > ring.fastq
+
+# unzip reference file
+#gunzip GCF_009914755.1_T2T-CHM13v2.0_genomic.fna.gz
+####################################################
+https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/009/914/755/GCF_009914755.1_T2T-CHM13v2.0/GCF_009914755.1_T2T-CHM13v2.0_genomic.fna.gz
+####################################################
+
+# ================================================================== #
+# Input prep and alignment
+
+conda activate nanoplot
+NanoPlot -t 48 --fastq ring.fastq  --outdir nanoplot_ring.fastq 
+
+
+conda activate wgs
+filtlong  --min_length 1000 --keep_percent 90 ring.fastq > ring.filtered.fastq
+minimap2 -t 48 -ax map-ont GCF_009914755.1_T2T-CHM13v2.0_genomic.fna ring.filtered.fastq > ring.aln.sam 
+
+# ================================================================== #
+# QC alignment 
+
+conda activate samtools
+samtools view -S -b ring.aln.sam > ring.bam
+samtools sort --threads 48 -o ring.sorted.bam ring.bam
+
+
+conda activate moshdepth 
+##depth sequencing moshdepth
+mosdepth -t 48 -n --fast-mode --by 500 --d4 ring.wgs ring.sorted.bam
+mosdepth -t 48 --chrom 22 -n --fast-mode --by 500 --d4 NF2.chrom22 ring.sorted.bam
+
+
+# ================================================================== #
+# Structural Variant calling VC sniffles/sniffles2 & CuteSV
+
+
+# Sniffles
+sniffles -t 48 --reference /home/user/data/03_Projects_open/ring/GCA_009914755.4_T2T-CHM13v2.0_genomic.fna -i ring.sorted.bam -v ring.sniffles.vcf
+
+# adding tandem repeatition annotation to improve this part
+# annotations.bed can be downloaded in https://github.com/fritzsedlazeck/Sniffles/tree/master/annotations
+sniffles -t 48 --reference /home/user/data/03_Projects_open/ring/GCA_009914755.4_T2T-CHM13v2.0_genomic.fna --tandem-repeats annotations.bed -i 892sm.sorted.bam -v 47_UG_ex_sniffles.vcf
+
+
+CuteSV  --threads 48 892sm.sorted.bam /home/user/data/03_Projects_open/ring/GCA_009914755.4_T2T-CHM13v2.0_genomic.fna --max_cluster_bias_INS 100 --diff_ratio_merging_INS	0.3 --max_cluster_bias_DEL 100 --diff_ratio_merging_DEL 0.3 892sm.cutesv.vcf 
+svim alignment UR 892sm.sorted.bam /home/user/data/03_Projects_open/ring/GCA_009914755.4_T2T-CHM13v2.0_genomic.fna
+
+# ================================================================== #
+# CNV analysis with NanoGLADIATOR
+
+perl NanoGLADIATORPrepare.pl experimentalfile47.txt --processors 48 --target hg38w10000 --assembly hg38
+perl NanoGLADIATORAnalysis.pl 47analysis.txt --processors 48 --target hg38w10000 --assembly hg38 --output prova --mode nocontrol
+
+
+# ================================================================== #
+
+
+
+
+
+
