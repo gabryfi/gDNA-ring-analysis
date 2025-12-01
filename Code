@@ -34,7 +34,7 @@ minimap2 -t 48 -ax map-ont GCF_009914755.1_T2T-CHM13v2.0_genomic.fna ring.filter
 
 conda activate samtools
 samtools view -S -b ring.aln.sam > ring.bam
-samtools sort --threads 48 -o ring.sorted.bam ring.bam
+samtools index ring.sorted.bam #for IGV
 
 
 conda activate moshdepth 
@@ -57,7 +57,7 @@ sniffles -t 48 --reference /home/user/data/03_Projects_open/ring/GCA_009914755.4
 
 CuteSV  --threads 48 892sm.sorted.bam /home/user/data/03_Projects_open/ring/GCA_009914755.4_T2T-CHM13v2.0_genomic.fna --max_cluster_bias_INS 100 --diff_ratio_merging_INS	0.3 --max_cluster_bias_DEL 100 --diff_ratio_merging_DEL 0.3 892sm.cutesv.vcf 
 svim alignment UR 892sm.sorted.bam /home/user/data/03_Projects_open/ring/GCA_009914755.4_T2T-CHM13v2.0_genomic.fna
-
+q
 # ================================================================== #
 # CNV analysis with NanoGLADIATOR
 
