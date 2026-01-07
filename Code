@@ -1,13 +1,11 @@
-
 #================================================================= #
 # Basecalling a different model
 
 dorado basecaller hac pod5s/ > calls.bam
-
 #================================================================= #
+
 zcat 1/fastq_pass/*.fastq.gz > 892sm1.fastq
 zcat 2/fastq_pass/*.fastq.gz > 892sm2.fastq
-
 
 # once all in the ws
 cat 892sm*  > ring.fastq
@@ -17,8 +15,8 @@ cat 892sm*  > ring.fastq
 ####################################################
 https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/009/914/755/GCF_009914755.1_T2T-CHM13v2.0/GCF_009914755.1_T2T-CHM13v2.0_genomic.fna.gz
 ####################################################
-
 # ================================================================== #
+
 # Input prep and alignment
 
 conda activate nanoplot
@@ -28,8 +26,8 @@ NanoPlot -t 48 --fastq ring.fastq  --outdir nanoplot_ring.fastq
 conda activate wgs
 filtlong  --min_length 1000 --keep_percent 90 ring.fastq > ring.filtered.fastq
 minimap2 -t 48 -ax map-ont GCF_009914755.1_T2T-CHM13v2.0_genomic.fna ring.filtered.fastq > ring.aln.sam 
-
 # ================================================================== #
+
 # QC alignment 
 
 conda activate samtools
@@ -41,8 +39,6 @@ conda activate moshdepth
 ##depth sequencing moshdepth
 mosdepth -t 48 -n --fast-mode --by 500 --d4 ring.wgs ring.sorted.bam
 mosdepth -t 48 --chrom 22 -n --fast-mode --by 500 --d4 NF2.chrom22 ring.sorted.bam
-
-
 # ================================================================== #
 # Structural Variant calling VC sniffles/sniffles2 & CuteSV
 
@@ -57,18 +53,10 @@ sniffles -t 48 --reference /home/user/data/03_Projects_open/ring/GCA_009914755.4
 
 CuteSV  --threads 48 892sm.sorted.bam /home/user/data/03_Projects_open/ring/GCA_009914755.4_T2T-CHM13v2.0_genomic.fna --max_cluster_bias_INS 100 --diff_ratio_merging_INS	0.3 --max_cluster_bias_DEL 100 --diff_ratio_merging_DEL 0.3 892sm.cutesv.vcf 
 svim alignment UR 892sm.sorted.bam /home/user/data/03_Projects_open/ring/GCA_009914755.4_T2T-CHM13v2.0_genomic.fna
-q
 # ================================================================== #
+
 # CNV analysis with NanoGLADIATOR
 
 perl NanoGLADIATORPrepare.pl experimentalfile47.txt --processors 48 --target hg38w10000 --assembly hg38
 perl NanoGLADIATORAnalysis.pl 47analysis.txt --processors 48 --target hg38w10000 --assembly hg38 --output prova --mode nocontrol
-
-
 # ================================================================== #
-
-
-
-
-
-
